@@ -1,0 +1,2 @@
+# generateCodePlugin
+idea

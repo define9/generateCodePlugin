@@ -1,0 +1,31 @@
+<idea-plugin>
+  <id>cn.definen.unique.plugin.id</id>
+  <name>generateTestCodePlugin</name>
+  <version>1.0</version>
+  <vendor email="define9@qq.com" url="http://syhu.com.cn">qdu-soft</vendor>
+
+  <description>对你项目中的 target/classes 目录解析, 对满足bean规范的类自动生成测试方法</description>
+
+  <change-notes>
+    2022/12/1. 初始化项目 Wow Wow Wow, 通过反射内省等手段扫描
+  </change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="173.0"/>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+    <action id="FirstAction" class="cn.definen.action.MainAction" text="generateTest" description="生成代码">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+    </action>
+  </actions>
+
+</idea-plugin>

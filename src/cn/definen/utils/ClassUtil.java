@@ -15,16 +15,19 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 /**
  * 反射, 加载目录下的 class
  */
 public class ClassUtil {
 
+    private static final Logger logger = Logger.getLogger(ClassUtil.class.getSimpleName());
+
     /**
      *  将list 的class 转为 ClassInfo
      * @param classes clz
-     * @param function 函数, 如果是 null 返回true, 留下
+     * @param function 过滤器函数, 如果是 null 返回true, 留下
      * @return list
      */
     public static List<ClassInfo> convertClassInfo(List<Class<?>> classes, Function<Class<?>, Boolean> function) {
@@ -131,28 +134,46 @@ public class ClassUtil {
     }
 
     /**
-     * 递归加载所有的类
-     * @param path 目录
+     * 递归项目 加载所有的类
+     * @param projectPath 项目目录, 不能以 / 结尾
+     * @param path 想扫描的目录, 不能以 / 结尾
      * @return list
      */
-    public static List<Class<?>> getDirClazzs(String path) {
+    public static List<Class<?>> getDirClazzs(String projectPath, String path) {
         List<Class<?>> ans = new ArrayList<>();
         List<File> files = new ArrayList<>();
 
-        // 一个路径, 需要一个urls
         List<URL> urls = new ArrayList<>();
-        getAllClassFile(new File(path), files, urls);
+
+        if (path == null || projectPath.length() > path.length()) {
+            logger.info("传入的扫描目录小于项目目录, 使用项目目录");
+            path = projectPath;
+        }
+
+        if (!path.contains(projectPath)) {
+            logger.warning("传入的projectPath, 不是path的子路径, 使用项目目录");
+            path = projectPath;
+        }
+
+        try {
+            urls.add(new File(projectPath).toURI().toURL());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        getAllClassFile(new File(path), files);
 
         // 构造 loader
         URLClassLoader loader = new URLClassLoader(urls.toArray(new URL[0]));
 
         // 循环加载类
         for (File file : files) {
-            String name = getClassName(path.length() + 1, file);
+            String name = getClassName(projectPath.length() + 1, file);
             try {
                 ans.add(loader.loadClass(name));
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 //有些类继承了Spring等, 加载这个类需要加载父类(Spring), 但是没找到父类, 所以抛出异常, 把这个异常捕获掉即可
+                e.printStackTrace();
             }
         }
 
@@ -167,21 +188,21 @@ public class ClassUtil {
                 .replaceAll("\\\\", ".");
     }
 
-    private static void getAllClassFile(File file, List<File> files, List<URL> urls) {
+    private static void getAllClassFile(File file, List<File> files) {
         if (file == null) return;
         if (file.isDirectory()) {
             // 如果是一个路径, name添加到urls里
-            try {
-                urls.add(file.toURI().toURL());
-            } catch (MalformedURLException e) {
-                System.err.println("[error] 文件夹在转换成 URL 对象时报错");
-                e.printStackTrace();
-            }
+//            try {
+//                urls.add(file.toURI().toURL());
+//            } catch (MalformedURLException e) {
+//                System.err.println("[error] 文件夹在转换成 URL 对象时报错");
+//                e.printStackTrace();
+//            }
 
             File[] listFiles = file.listFiles();
             if (listFiles == null) return;
             for (File f : listFiles) {
-                getAllClassFile(f, files, urls);
+                getAllClassFile(f, files);
             }
         } else {
             if (file.getName().endsWith(".class")) {
